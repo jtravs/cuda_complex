@@ -256,53 +256,10 @@ template<class T, class charT, class traits>
 
 */
 
-#include <type_traits>
-#include <stdexcept>
 #include <cmath>
 #include <sstream>
 
 namespace cuda_complex {
-
-// taken from libcpp type_traits
-// __promote
-
-template <class _A1, class _A2 = void, class _A3 = void,
-          bool = (std::is_arithmetic<_A1>::value || std::is_void<_A1>::value) &&
-                 (std::is_arithmetic<_A2>::value || std::is_void<_A2>::value) &&
-                 (std::is_arithmetic<_A3>::value || std::is_void<_A3>::value)>
-class __promote {};
-
-template <class _A1, class _A2, class _A3>
-class __promote<_A1, _A2, _A3, true>
-{
-private:
-    typedef typename __promote<_A1>::type __type1;
-    typedef typename __promote<_A2>::type __type2;
-    typedef typename __promote<_A3>::type __type3;
-public:
-    typedef decltype(__type1() + __type2() + __type3()) type;
-};
-
-template <class _A1, class _A2>
-class __promote<_A1, _A2, void, true>
-{
-private:
-    typedef typename __promote<_A1>::type __type1;
-    typedef typename __promote<_A2>::type __type2;
-public:
-    typedef decltype(__type1() + __type2()) type;
-};
-
-template <class _A1>
-class __promote<_A1, void, void, true>
-{
-public:
-    typedef typename std::conditional<std::is_arithmetic<_A1>::value,
-                                      typename std::conditional<std::is_integral<_A1>::value, double, _A1>::type,
-                     void
-            >::type type;
-};
-
 
 template<class _Tp> class  complex;
 
@@ -864,18 +821,6 @@ real(double __re)
     return __re;
 }
 
-template<class _Tp>
-inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_integral<_Tp>::value,
-    double
->::type
-real(_Tp  __re)
-{
-    return __re;
-}
-
 inline CUDA_CALLABLE_MEMBER
 float
 real(float  __re)
@@ -903,18 +848,6 @@ imag(long double __re)
 inline CUDA_CALLABLE_MEMBER
 double
 imag(double __re)
-{
-    return 0;
-}
-
-template<class _Tp>
-inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_integral<_Tp>::value,
-    double
->::type
-imag(_Tp  __re)
 {
     return 0;
 }
@@ -960,18 +893,6 @@ arg(double __re)
     return atan2(0., __re);
 }
 
-template<class _Tp>
-inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_integral<_Tp>::value,
-    double
->::type
-arg(_Tp __re)
-{
-    return atan2(0., __re);
-}
-
 inline CUDA_CALLABLE_MEMBER
 float
 arg(float __re)
@@ -1007,18 +928,6 @@ norm(double __re)
     return __re * __re;
 }
 
-template<class _Tp>
-inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_integral<_Tp>::value,
-    double
->::type
-norm(_Tp __re)
-{
-    return (double)__re * __re;
-}
-
 inline CUDA_CALLABLE_MEMBER
 float
 norm(float __re)
@@ -1046,18 +955,6 @@ conj(long double __re)
 inline CUDA_CALLABLE_MEMBER
 complex<double>
 conj(double __re)
-{
-    return complex<double>(__re);
-}
-
-template<class _Tp>
-inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_integral<_Tp>::value,
-    complex<double>
->::type
-conj(_Tp __re)
 {
     return complex<double>(__re);
 }
@@ -1097,18 +994,6 @@ proj(double __re)
 {
     if (std::isinf(__re))
         __re = std::abs(__re);
-    return complex<double>(__re);
-}
-
-template<class _Tp>
-inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_integral<_Tp>::value,
-    complex<double>
->::type
-proj(_Tp __re)
-{
     return complex<double>(__re);
 }
 
@@ -1227,39 +1112,20 @@ pow(const complex<_Tp>& __x, const complex<_Tp>& __y)
     return exp(__y * log(__x));
 }
 
-template<class _Tp, class _Up>
+template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-complex<typename __promote<_Tp, _Up>::type>
-pow(const complex<_Tp>& __x, const complex<_Up>& __y)
-{
-    typedef complex<typename __promote<_Tp, _Up>::type> result_type;
-    return pow(result_type(__x), result_type(__y));
+complex<_Tp>
+pow(const complex<_Tp>& __x, const _Tp& __y)
+{   
+    return pow(__x, complex<_Tp>(__y));
 }
 
-template<class _Tp, class _Up>
+template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_arithmetic<_Up>::value,
-    complex<typename __promote<_Tp, _Up>::type>
->::type
-pow(const complex<_Tp>& __x, const _Up& __y)
+complex<_Tp>
+pow(const _Tp& __x, const complex<_Tp>& __y)
 {
-    typedef complex<typename __promote<_Tp, _Up>::type> result_type;
-    return pow(result_type(__x), result_type(__y));
-}
-
-template<class _Tp, class _Up>
-inline CUDA_CALLABLE_MEMBER
-typename std::enable_if
-<
-    std::is_arithmetic<_Tp>::value,
-    complex<typename __promote<_Tp, _Up>::type>
->::type
-pow(const _Tp& __x, const complex<_Up>& __y)
-{
-    typedef complex<typename __promote<_Tp, _Up>::type> result_type;
-    return pow(result_type(__x), result_type(__y));
+    return pow(complex<_Tp>(__x), __y);
 }
 
 // asinh
