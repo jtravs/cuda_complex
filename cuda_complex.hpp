@@ -1,7 +1,7 @@
 // Implementation of C++ std::complex for use on CUDA devices.
 // Wriiten by John C. Travers <jtravs@gmail.com>
 //
-// We use the cuda_cmplx namespace for all classes and functions.
+// We use the cuda_complex namespace for all classes and functions.
 //
 // Heavily derived from the LLVM libcpp project (svn revision 147853).
 // Based on libcxx/include/complex and some libcxx/include/type_traits
