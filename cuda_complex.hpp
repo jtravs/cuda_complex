@@ -1,14 +1,14 @@
-// Implementation of C++ std::complex for use on CUDA devices.
-// Written by John C. Travers <jtravs@gmail.com>
+// An implementation of C++ std::complex for use on CUDA devices.
+// Written by John C. Travers <jtravs@gmail.com> (2012)
 //
 // Missing:
 //  - long double support (not supported on CUDA)
 //  - some integral pow functions (due to lack of C++11 support on CUDA)
 //
 // Heavily derived from the LLVM libcpp project (svn revision 147853).
-// Based on libcxx/include/complex and some libcxx/include/type_traits
+// Based on libcxx/include/complex.
 // The git history contains the complete change history from the original.
-// The modifications are licensed as per the originl LLVM license below.
+// The modifications are licensed as per the original LLVM license below.
 //
 // -*- C++ -*-
 //===--------------------------- complex ----------------------------------===//
