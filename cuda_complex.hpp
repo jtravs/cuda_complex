@@ -1,5 +1,9 @@
 // Implementation of C++ std::complex for use on CUDA devices.
-// Wriiten by John C. Travers <jtravs@gmail.com>
+// Written by John C. Travers <jtravs@gmail.com>
+//
+// Missing:
+//  - long double support (not supported on CUDA)
+//  - some integral pow functions (due to lack of C++11 support on CUDA)
 //
 // Heavily derived from the LLVM libcpp project (svn revision 147853).
 // Based on libcxx/include/complex and some libcxx/include/type_traits
@@ -27,9 +31,6 @@
 
 /*
     complex synopsis
-
-namespace cuda_complex
-{
 
 template<class T>
 class complex
@@ -212,8 +213,6 @@ template<class T, class charT, class traits>
 template<class T, class charT, class traits>
   basic_ostream<charT, traits>&
   operator<<(basic_ostream<charT, traits>& o, const complex<T>& x);
-
-}  // std
 
 */
 
