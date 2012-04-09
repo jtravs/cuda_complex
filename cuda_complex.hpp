@@ -1,3 +1,12 @@
+// Implementation of C++ std::complex for use on CUDA devices.
+// Wriiten by John C. Travers <jtravs@gmail.com>
+//
+// We use the cuda_cmplx namespace for all classes and functions.
+//
+// Heavily derived from the LLVM libcpp project (svn revision 147853).
+// The git history contains the complete change history from the original.
+// The modifications are licensed as per the originl LLVM license below.
+//
 // -*- C++ -*-
 //===--------------------------- complex ----------------------------------===//
 //
@@ -8,8 +17,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_COMPLEX
-#define _LIBCPP_COMPLEX
+#ifndef CUDA_COMPLEX_HPP
+#define CUDA_COMPLEX_HPP
+
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#else
+#define CUDA_CALLABLE_MEMBER
+#endif
 
 /*
     complex synopsis
@@ -240,28 +255,20 @@ template<class T, class charT, class traits>
 
 */
 
-#include <__config>
 #include <type_traits>
 #include <stdexcept>
 #include <cmath>
 #include <sstream>
-#if defined(_LIBCPP_NO_EXCEPTIONS)
-    #include <cassert>
-#endif
 
-#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
-#endif
+namespace cuda_complex {
 
-_LIBCPP_BEGIN_NAMESPACE_STD
-
-template<class _Tp> class _LIBCPP_VISIBLE complex;
+template<class _Tp> class  complex;
 
 template<class _Tp> complex<_Tp> operator*(const complex<_Tp>& __z, const complex<_Tp>& __w);
 template<class _Tp> complex<_Tp> operator/(const complex<_Tp>& __x, const complex<_Tp>& __y);
 
 template<class _Tp>
-class _LIBCPP_VISIBLE complex
+class  complex
 {
 public:
     typedef _Tp value_type;
@@ -269,109 +276,109 @@ private:
     value_type __re_;
     value_type __im_;
 public:
-    _LIBCPP_INLINE_VISIBILITY
+    CUDA_CALLABLE_MEMBER
     complex(const value_type& __re = value_type(), const value_type& __im = value_type())
         : __re_(__re), __im_(__im) {}
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY
+    template<class _Xp> CUDA_CALLABLE_MEMBER
     complex(const complex<_Xp>& __c)
         : __re_(__c.real()), __im_(__c.imag()) {}
 
-    _LIBCPP_INLINE_VISIBILITY value_type real() const {return __re_;}
-    _LIBCPP_INLINE_VISIBILITY value_type imag() const {return __im_;}
+    CUDA_CALLABLE_MEMBER value_type real() const {return __re_;}
+    CUDA_CALLABLE_MEMBER value_type imag() const {return __im_;}
 
-    _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
-    _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
+    CUDA_CALLABLE_MEMBER void real(value_type __re) {__re_ = __re;}
+    CUDA_CALLABLE_MEMBER void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (const value_type& __re)
+    CUDA_CALLABLE_MEMBER complex& operator= (const value_type& __re)
         {__re_ = __re; __im_ = value_type(); return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator+=(const value_type& __re) {__re_ += __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator-=(const value_type& __re) {__re_ -= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator*=(const value_type& __re) {__re_ *= __re; __im_ *= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator/=(const value_type& __re) {__re_ /= __re; __im_ /= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator+=(const value_type& __re) {__re_ += __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator-=(const value_type& __re) {__re_ -= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator*=(const value_type& __re) {__re_ *= __re; __im_ *= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator/=(const value_type& __re) {__re_ /= __re; __im_ /= __re; return *this;}
 
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator= (const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator= (const complex<_Xp>& __c)
         {
             __re_ = __c.real();
             __im_ = __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator+=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator+=(const complex<_Xp>& __c)
         {
             __re_ += __c.real();
             __im_ += __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator-=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator-=(const complex<_Xp>& __c)
         {
             __re_ -= __c.real();
             __im_ -= __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator*=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator*=(const complex<_Xp>& __c)
         {
             *this = *this * __c;
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator/=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator/=(const complex<_Xp>& __c)
         {
             *this = *this / __c;
             return *this;
         }
 };
 
-template<> class _LIBCPP_VISIBLE complex<double>;
-template<> class _LIBCPP_VISIBLE complex<long double>;
+template<> class  complex<double>;
+template<> class  complex<long double>;
 
 template<>
-class _LIBCPP_VISIBLE complex<float>
+class  complex<float>
 {
     float __re_;
     float __im_;
 public:
     typedef float value_type;
 
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY complex(float __re = 0.0f, float __im = 0.0f)
+    /*constexpr*/ CUDA_CALLABLE_MEMBER complex(float __re = 0.0f, float __im = 0.0f)
         : __re_(__re), __im_(__im) {}
     explicit /*constexpr*/ complex(const complex<double>& __c);
     explicit /*constexpr*/ complex(const complex<long double>& __c);
 
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY float real() const {return __re_;}
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY float imag() const {return __im_;}
+    /*constexpr*/ CUDA_CALLABLE_MEMBER float real() const {return __re_;}
+    /*constexpr*/ CUDA_CALLABLE_MEMBER float imag() const {return __im_;}
 
-    _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
-    _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
+    CUDA_CALLABLE_MEMBER void real(value_type __re) {__re_ = __re;}
+    CUDA_CALLABLE_MEMBER void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (float __re)
+    CUDA_CALLABLE_MEMBER complex& operator= (float __re)
         {__re_ = __re; __im_ = value_type(); return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator+=(float __re) {__re_ += __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator-=(float __re) {__re_ -= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator*=(float __re) {__re_ *= __re; __im_ *= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator/=(float __re) {__re_ /= __re; __im_ /= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator+=(float __re) {__re_ += __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator-=(float __re) {__re_ -= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator*=(float __re) {__re_ *= __re; __im_ *= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator/=(float __re) {__re_ /= __re; __im_ /= __re; return *this;}
 
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator= (const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator= (const complex<_Xp>& __c)
         {
             __re_ = __c.real();
             __im_ = __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator+=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator+=(const complex<_Xp>& __c)
         {
             __re_ += __c.real();
             __im_ += __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator-=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator-=(const complex<_Xp>& __c)
         {
             __re_ -= __c.real();
             __im_ -= __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator*=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator*=(const complex<_Xp>& __c)
         {
             *this = *this * __c;
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator/=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator/=(const complex<_Xp>& __c)
         {
             *this = *this / __c;
             return *this;
@@ -379,55 +386,55 @@ public:
 };
 
 template<>
-class _LIBCPP_VISIBLE complex<double>
+class  complex<double>
 {
     double __re_;
     double __im_;
 public:
     typedef double value_type;
 
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY complex(double __re = 0.0, double __im = 0.0)
+    /*constexpr*/ CUDA_CALLABLE_MEMBER complex(double __re = 0.0, double __im = 0.0)
         : __re_(__re), __im_(__im) {}
     /*constexpr*/ complex(const complex<float>& __c);
     explicit /*constexpr*/ complex(const complex<long double>& __c);
 
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY double real() const {return __re_;}
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY double imag() const {return __im_;}
+    /*constexpr*/ CUDA_CALLABLE_MEMBER double real() const {return __re_;}
+    /*constexpr*/ CUDA_CALLABLE_MEMBER double imag() const {return __im_;}
 
-    _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
-    _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
+    CUDA_CALLABLE_MEMBER void real(value_type __re) {__re_ = __re;}
+    CUDA_CALLABLE_MEMBER void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (double __re)
+    CUDA_CALLABLE_MEMBER complex& operator= (double __re)
         {__re_ = __re; __im_ = value_type(); return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator+=(double __re) {__re_ += __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator-=(double __re) {__re_ -= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator*=(double __re) {__re_ *= __re; __im_ *= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator/=(double __re) {__re_ /= __re; __im_ /= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator+=(double __re) {__re_ += __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator-=(double __re) {__re_ -= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator*=(double __re) {__re_ *= __re; __im_ *= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator/=(double __re) {__re_ /= __re; __im_ /= __re; return *this;}
 
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator= (const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator= (const complex<_Xp>& __c)
         {
             __re_ = __c.real();
             __im_ = __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator+=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator+=(const complex<_Xp>& __c)
         {
             __re_ += __c.real();
             __im_ += __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator-=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator-=(const complex<_Xp>& __c)
         {
             __re_ -= __c.real();
             __im_ -= __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator*=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator*=(const complex<_Xp>& __c)
         {
             *this = *this * __c;
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator/=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator/=(const complex<_Xp>& __c)
         {
             *this = *this / __c;
             return *this;
@@ -435,55 +442,55 @@ public:
 };
 
 template<>
-class _LIBCPP_VISIBLE complex<long double>
+class  complex<long double>
 {
     long double __re_;
     long double __im_;
 public:
     typedef long double value_type;
 
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY complex(long double __re = 0.0L, long double __im = 0.0L)
+    /*constexpr*/ CUDA_CALLABLE_MEMBER complex(long double __re = 0.0L, long double __im = 0.0L)
         : __re_(__re), __im_(__im) {}
     /*constexpr*/ complex(const complex<float>& __c);
     /*constexpr*/ complex(const complex<double>& __c);
 
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY long double real() const {return __re_;}
-    /*constexpr*/ _LIBCPP_INLINE_VISIBILITY long double imag() const {return __im_;}
+    /*constexpr*/ CUDA_CALLABLE_MEMBER long double real() const {return __re_;}
+    /*constexpr*/ CUDA_CALLABLE_MEMBER long double imag() const {return __im_;}
 
-    _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
-    _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
+    CUDA_CALLABLE_MEMBER void real(value_type __re) {__re_ = __re;}
+    CUDA_CALLABLE_MEMBER void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (long double __re)
+    CUDA_CALLABLE_MEMBER complex& operator= (long double __re)
         {__re_ = __re; __im_ = value_type(); return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator+=(long double __re) {__re_ += __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator-=(long double __re) {__re_ -= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator*=(long double __re) {__re_ *= __re; __im_ *= __re; return *this;}
-    _LIBCPP_INLINE_VISIBILITY complex& operator/=(long double __re) {__re_ /= __re; __im_ /= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator+=(long double __re) {__re_ += __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator-=(long double __re) {__re_ -= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator*=(long double __re) {__re_ *= __re; __im_ *= __re; return *this;}
+    CUDA_CALLABLE_MEMBER complex& operator/=(long double __re) {__re_ /= __re; __im_ /= __re; return *this;}
 
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator= (const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator= (const complex<_Xp>& __c)
         {
             __re_ = __c.real();
             __im_ = __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator+=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator+=(const complex<_Xp>& __c)
         {
             __re_ += __c.real();
             __im_ += __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator-=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator-=(const complex<_Xp>& __c)
         {
             __re_ -= __c.real();
             __im_ -= __c.imag();
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator*=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator*=(const complex<_Xp>& __c)
         {
             *this = *this * __c;
             return *this;
         }
-    template<class _Xp> _LIBCPP_INLINE_VISIBILITY complex& operator/=(const complex<_Xp>& __c)
+    template<class _Xp> CUDA_CALLABLE_MEMBER complex& operator/=(const complex<_Xp>& __c)
         {
             *this = *this / __c;
             return *this;
@@ -491,39 +498,39 @@ public:
 };
 
 //constexpr
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<float>::complex(const complex<double>& __c)
     : __re_(__c.real()), __im_(__c.imag()) {}
 
 //constexpr
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<float>::complex(const complex<long double>& __c)
     : __re_(__c.real()), __im_(__c.imag()) {}
 
 //constexpr
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<double>::complex(const complex<float>& __c)
     : __re_(__c.real()), __im_(__c.imag()) {}
 
 //constexpr
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<double>::complex(const complex<long double>& __c)
     : __re_(__c.real()), __im_(__c.imag()) {}
 
 //constexpr
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<long double>::complex(const complex<float>& __c)
     : __re_(__c.real()), __im_(__c.imag()) {}
 
 //constexpr
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<long double>::complex(const complex<double>& __c)
     : __re_(__c.real()), __im_(__c.imag()) {}
 
 // 26.3.6 operators:
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator+(const complex<_Tp>& __x, const complex<_Tp>& __y)
 {
@@ -533,7 +540,7 @@ operator+(const complex<_Tp>& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator+(const complex<_Tp>& __x, const _Tp& __y)
 {
@@ -543,7 +550,7 @@ operator+(const complex<_Tp>& __x, const _Tp& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator+(const _Tp& __x, const complex<_Tp>& __y)
 {
@@ -553,7 +560,7 @@ operator+(const _Tp& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator-(const complex<_Tp>& __x, const complex<_Tp>& __y)
 {
@@ -563,7 +570,7 @@ operator-(const complex<_Tp>& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator-(const complex<_Tp>& __x, const _Tp& __y)
 {
@@ -573,7 +580,7 @@ operator-(const complex<_Tp>& __x, const _Tp& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator-(const _Tp& __x, const complex<_Tp>& __y)
 {
@@ -583,6 +590,7 @@ operator-(const _Tp& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator*(const complex<_Tp>& __z, const complex<_Tp>& __w)
 {
@@ -642,7 +650,7 @@ operator*(const complex<_Tp>& __z, const complex<_Tp>& __w)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator*(const complex<_Tp>& __x, const _Tp& __y)
 {
@@ -652,7 +660,7 @@ operator*(const complex<_Tp>& __x, const _Tp& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator*(const _Tp& __x, const complex<_Tp>& __y)
 {
@@ -662,6 +670,7 @@ operator*(const _Tp& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator/(const complex<_Tp>& __z, const complex<_Tp>& __w)
 {
@@ -706,7 +715,7 @@ operator/(const complex<_Tp>& __z, const complex<_Tp>& __w)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator/(const complex<_Tp>& __x, const _Tp& __y)
 {
@@ -714,7 +723,7 @@ operator/(const complex<_Tp>& __x, const _Tp& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator/(const _Tp& __x, const complex<_Tp>& __y)
 {
@@ -724,7 +733,7 @@ operator/(const _Tp& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator+(const complex<_Tp>& __x)
 {
@@ -732,7 +741,7 @@ operator+(const complex<_Tp>& __x)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 operator-(const complex<_Tp>& __x)
 {
@@ -740,7 +749,7 @@ operator-(const complex<_Tp>& __x)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 bool
 operator==(const complex<_Tp>& __x, const complex<_Tp>& __y)
 {
@@ -748,7 +757,7 @@ operator==(const complex<_Tp>& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 bool
 operator==(const complex<_Tp>& __x, const _Tp& __y)
 {
@@ -756,7 +765,7 @@ operator==(const complex<_Tp>& __x, const _Tp& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 bool
 operator==(const _Tp& __x, const complex<_Tp>& __y)
 {
@@ -764,7 +773,7 @@ operator==(const _Tp& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 bool
 operator!=(const complex<_Tp>& __x, const complex<_Tp>& __y)
 {
@@ -772,7 +781,7 @@ operator!=(const complex<_Tp>& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 bool
 operator!=(const complex<_Tp>& __x, const _Tp& __y)
 {
@@ -780,7 +789,7 @@ operator!=(const complex<_Tp>& __x, const _Tp& __y)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 bool
 operator!=(const _Tp& __x, const complex<_Tp>& __y)
 {
@@ -792,21 +801,21 @@ operator!=(const _Tp& __x, const complex<_Tp>& __y)
 // real
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 _Tp
 real(const complex<_Tp>& __c)
 {
     return __c.real();
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 long double
 real(long double __re)
 {
     return __re;
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 double
 real(double __re)
 {
@@ -814,7 +823,7 @@ real(double __re)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_integral<_Tp>::value,
@@ -825,7 +834,7 @@ real(_Tp  __re)
     return __re;
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 float
 real(float  __re)
 {
@@ -835,21 +844,21 @@ real(float  __re)
 // imag
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 _Tp
 imag(const complex<_Tp>& __c)
 {
     return __c.imag();
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 long double
 imag(long double __re)
 {
     return 0;
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 double
 imag(double __re)
 {
@@ -857,7 +866,7 @@ imag(double __re)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_integral<_Tp>::value,
@@ -868,7 +877,7 @@ imag(_Tp  __re)
     return 0;
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 float
 imag(float  __re)
 {
@@ -878,7 +887,7 @@ imag(float  __re)
 // abs
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 _Tp
 abs(const complex<_Tp>& __c)
 {
@@ -888,21 +897,21 @@ abs(const complex<_Tp>& __c)
 // arg
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 _Tp
 arg(const complex<_Tp>& __c)
 {
     return atan2(__c.imag(), __c.real());
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 long double
 arg(long double __re)
 {
     return atan2l(0.L, __re);
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 double
 arg(double __re)
 {
@@ -910,7 +919,7 @@ arg(double __re)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_integral<_Tp>::value,
@@ -921,7 +930,7 @@ arg(_Tp __re)
     return atan2(0., __re);
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 float
 arg(float __re)
 {
@@ -931,7 +940,7 @@ arg(float __re)
 // norm
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 _Tp
 norm(const complex<_Tp>& __c)
 {
@@ -942,14 +951,14 @@ norm(const complex<_Tp>& __c)
     return __c.real() * __c.real() + __c.imag() * __c.imag();
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 long double
 norm(long double __re)
 {
     return __re * __re;
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 double
 norm(double __re)
 {
@@ -957,7 +966,7 @@ norm(double __re)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_integral<_Tp>::value,
@@ -968,7 +977,7 @@ norm(_Tp __re)
     return (double)__re * __re;
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 float
 norm(float __re)
 {
@@ -978,21 +987,21 @@ norm(float __re)
 // conj
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 conj(const complex<_Tp>& __c)
 {
     return complex<_Tp>(__c.real(), -__c.imag());
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<long double>
 conj(long double __re)
 {
     return complex<long double>(__re);
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<double>
 conj(double __re)
 {
@@ -1000,7 +1009,7 @@ conj(double __re)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_integral<_Tp>::value,
@@ -1011,7 +1020,7 @@ conj(_Tp __re)
     return complex<double>(__re);
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<float>
 conj(float __re)
 {
@@ -1021,7 +1030,7 @@ conj(float __re)
 // proj
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 proj(const complex<_Tp>& __c)
 {
@@ -1031,7 +1040,7 @@ proj(const complex<_Tp>& __c)
     return __r;
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<long double>
 proj(long double __re)
 {
@@ -1040,7 +1049,7 @@ proj(long double __re)
     return complex<long double>(__re);
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<double>
 proj(double __re)
 {
@@ -1050,7 +1059,7 @@ proj(double __re)
 }
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_integral<_Tp>::value,
@@ -1061,7 +1070,7 @@ proj(_Tp __re)
     return complex<double>(__re);
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<float>
 proj(float __re)
 {
@@ -1073,6 +1082,7 @@ proj(float __re)
 // polar
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 polar(const _Tp& __rho, const _Tp& __theta = _Tp(0))
 {
@@ -1102,7 +1112,7 @@ polar(const _Tp& __rho, const _Tp& __theta = _Tp(0))
 // log
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 log(const complex<_Tp>& __x)
 {
@@ -1112,7 +1122,7 @@ log(const complex<_Tp>& __x)
 // log10
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 log10(const complex<_Tp>& __x)
 {
@@ -1122,6 +1132,7 @@ log10(const complex<_Tp>& __x)
 // sqrt
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 sqrt(const complex<_Tp>& __x)
 {
@@ -1139,6 +1150,7 @@ sqrt(const complex<_Tp>& __x)
 // exp
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 exp(const complex<_Tp>& __x)
 {
@@ -1166,7 +1178,7 @@ exp(const complex<_Tp>& __x)
 // pow
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 pow(const complex<_Tp>& __x, const complex<_Tp>& __y)
 {
@@ -1174,7 +1186,7 @@ pow(const complex<_Tp>& __x, const complex<_Tp>& __y)
 }
 
 template<class _Tp, class _Up>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<typename __promote<_Tp, _Up>::type>
 pow(const complex<_Tp>& __x, const complex<_Up>& __y)
 {
@@ -1183,7 +1195,7 @@ pow(const complex<_Tp>& __x, const complex<_Up>& __y)
 }
 
 template<class _Tp, class _Up>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_arithmetic<_Up>::value,
@@ -1196,7 +1208,7 @@ pow(const complex<_Tp>& __x, const _Up& __y)
 }
 
 template<class _Tp, class _Up>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 typename enable_if
 <
     is_arithmetic<_Tp>::value,
@@ -1211,6 +1223,7 @@ pow(const _Tp& __x, const complex<_Up>& __y)
 // asinh
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 asinh(const complex<_Tp>& __x)
 {
@@ -1240,6 +1253,7 @@ asinh(const complex<_Tp>& __x)
 // acosh
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 acosh(const complex<_Tp>& __x)
 {
@@ -1272,6 +1286,7 @@ acosh(const complex<_Tp>& __x)
 // atanh
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 atanh(const complex<_Tp>& __x)
 {
@@ -1305,6 +1320,7 @@ atanh(const complex<_Tp>& __x)
 // sinh
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 sinh(const complex<_Tp>& __x)
 {
@@ -1320,6 +1336,7 @@ sinh(const complex<_Tp>& __x)
 // cosh
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 cosh(const complex<_Tp>& __x)
 {
@@ -1337,6 +1354,7 @@ cosh(const complex<_Tp>& __x)
 // tanh
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 tanh(const complex<_Tp>& __x)
 {
@@ -1357,6 +1375,7 @@ tanh(const complex<_Tp>& __x)
 // asin
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 asin(const complex<_Tp>& __x)
 {
@@ -1367,6 +1386,7 @@ asin(const complex<_Tp>& __x)
 // acos
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 acos(const complex<_Tp>& __x)
 {
@@ -1404,6 +1424,7 @@ acos(const complex<_Tp>& __x)
 // atan
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 atan(const complex<_Tp>& __x)
 {
@@ -1414,6 +1435,7 @@ atan(const complex<_Tp>& __x)
 // sin
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 sin(const complex<_Tp>& __x)
 {
@@ -1424,7 +1446,7 @@ sin(const complex<_Tp>& __x)
 // cos
 
 template<class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 cos(const complex<_Tp>& __x)
 {
@@ -1434,6 +1456,7 @@ cos(const complex<_Tp>& __x)
 // tan
 
 template<class _Tp>
+CUDA_CALLABLE_MEMBER
 complex<_Tp>
 tan(const complex<_Tp>& __x)
 {
@@ -1515,6 +1538,6 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, const complex<_Tp>& __x)
     return __os << __s.str();
 }
 
-_LIBCPP_END_NAMESPACE_STD
+} // close namespace cuda_complex
 
-#endif  // _LIBCPP_COMPLEX
+#endif  // CUDA_COMPLEX_HPP
