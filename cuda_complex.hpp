@@ -4,6 +4,7 @@
 // We use the cuda_cmplx namespace for all classes and functions.
 //
 // Heavily derived from the LLVM libcpp project (svn revision 147853).
+// Based on libcxx/include/complex and some libcxx/include/type_traits
 // The git history contains the complete change history from the original.
 // The modifications are licensed as per the originl LLVM license below.
 //
@@ -29,7 +30,7 @@
 /*
     complex synopsis
 
-namespace std
+namespace cuda_complex
 {
 
 template<class T>
@@ -259,6 +260,47 @@ template<class T, class charT, class traits>
 #include <stdexcept>
 #include <cmath>
 #include <sstream>
+
+// taken from libcpp type_traits
+// __promote
+
+template <class _A1, class _A2 = void, class _A3 = void,
+          bool = (std::is_arithmetic<_A1>::value || std::is_void<_A1>::value) &&
+                 (std::is_arithmetic<_A2>::value || std::is_void<_A2>::value) &&
+                 (std::is_arithmetic<_A3>::value || std::is_void<_A3>::value)>
+class __promote {};
+
+template <class _A1, class _A2, class _A3>
+class __promote<_A1, _A2, _A3, true>
+{
+private:
+    typedef typename __promote<_A1>::type __type1;
+    typedef typename __promote<_A2>::type __type2;
+    typedef typename __promote<_A3>::type __type3;
+public:
+    typedef decltype(__type1() + __type2() + __type3()) type;
+};
+
+template <class _A1, class _A2>
+class __promote<_A1, _A2, void, true>
+{
+private:
+    typedef typename __promote<_A1>::type __type1;
+    typedef typename __promote<_A2>::type __type2;
+public:
+    typedef decltype(__type1() + __type2()) type;
+};
+
+template <class _A1>
+class __promote<_A1, void, void, true>
+{
+public:
+    typedef typename std::conditional<std::is_arithmetic<_A1>::value,
+                                      typename std::conditional<std::is_integral<_A1>::value, double, _A1>::type,
+                     void
+            >::type type;
+};
+
 
 namespace cuda_complex {
 
@@ -824,9 +866,9 @@ real(double __re)
 
 template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_integral<_Tp>::value,
+    std::is_integral<_Tp>::value,
     double
 >::type
 real(_Tp  __re)
@@ -867,9 +909,9 @@ imag(double __re)
 
 template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_integral<_Tp>::value,
+    std::is_integral<_Tp>::value,
     double
 >::type
 imag(_Tp  __re)
@@ -920,9 +962,9 @@ arg(double __re)
 
 template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_integral<_Tp>::value,
+    std::is_integral<_Tp>::value,
     double
 >::type
 arg(_Tp __re)
@@ -967,9 +1009,9 @@ norm(double __re)
 
 template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_integral<_Tp>::value,
+    std::is_integral<_Tp>::value,
     double
 >::type
 norm(_Tp __re)
@@ -1010,9 +1052,9 @@ conj(double __re)
 
 template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_integral<_Tp>::value,
+    std::is_integral<_Tp>::value,
     complex<double>
 >::type
 conj(_Tp __re)
@@ -1034,7 +1076,7 @@ inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 proj(const complex<_Tp>& __c)
 {
-    std::complex<_Tp> __r = __c;
+    complex<_Tp> __r = __c;
     if (isinf(__c.real()) || isinf(__c.imag()))
         __r = complex<_Tp>(INFINITY, copysign(_Tp(0), __c.imag()));
     return __r;
@@ -1045,7 +1087,7 @@ complex<long double>
 proj(long double __re)
 {
     if (isinf(__re))
-        __re = abs(__re);
+        __re = std::abs(__re);
     return complex<long double>(__re);
 }
 
@@ -1054,15 +1096,15 @@ complex<double>
 proj(double __re)
 {
     if (isinf(__re))
-        __re = abs(__re);
+        __re = std::abs(__re);
     return complex<double>(__re);
 }
 
 template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_integral<_Tp>::value,
+    std::is_integral<_Tp>::value,
     complex<double>
 >::type
 proj(_Tp __re)
@@ -1075,7 +1117,7 @@ complex<float>
 proj(float __re)
 {
     if (isinf(__re))
-        __re = abs(__re);
+        __re = std::abs(__re);
     return complex<float>(__re);
 }
 
@@ -1191,33 +1233,33 @@ complex<typename __promote<_Tp, _Up>::type>
 pow(const complex<_Tp>& __x, const complex<_Up>& __y)
 {
     typedef complex<typename __promote<_Tp, _Up>::type> result_type;
-    return _VSTD::pow(result_type(__x), result_type(__y));
+    return std::pow(result_type(__x), result_type(__y));
 }
 
 template<class _Tp, class _Up>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_arithmetic<_Up>::value,
+    std::is_arithmetic<_Up>::value,
     complex<typename __promote<_Tp, _Up>::type>
 >::type
 pow(const complex<_Tp>& __x, const _Up& __y)
 {
     typedef complex<typename __promote<_Tp, _Up>::type> result_type;
-    return _VSTD::pow(result_type(__x), result_type(__y));
+    return std::pow(result_type(__x), result_type(__y));
 }
 
 template<class _Tp, class _Up>
 inline CUDA_CALLABLE_MEMBER
-typename enable_if
+typename std::enable_if
 <
-    is_arithmetic<_Tp>::value,
+    std::is_arithmetic<_Tp>::value,
     complex<typename __promote<_Tp, _Up>::type>
 >::type
 pow(const _Tp& __x, const complex<_Up>& __y)
 {
     typedef complex<typename __promote<_Tp, _Up>::type> result_type;
-    return _VSTD::pow(result_type(__x), result_type(__y));
+    return std::pow(result_type(__x), result_type(__y));
 }
 
 // asinh
@@ -1261,7 +1303,7 @@ acosh(const complex<_Tp>& __x)
     if (isinf(__x.real()))
     {
         if (isnan(__x.imag()))
-            return complex<_Tp>(abs(__x.real()), __x.imag());
+            return complex<_Tp>(std::abs(__x.real()), __x.imag());
         if (isinf(__x.imag()))
             if (__x.real() > 0)
                 return complex<_Tp>(__x.real(), copysign(__pi * _Tp(0.25), __x.imag()));
@@ -1274,11 +1316,11 @@ acosh(const complex<_Tp>& __x)
     if (isnan(__x.real()))
     {
         if (isinf(__x.imag()))
-            return complex<_Tp>(abs(__x.imag()), __x.real());
+            return complex<_Tp>(std::abs(__x.imag()), __x.real());
         return complex<_Tp>(__x.real(), __x.real());
     }
     if (isinf(__x.imag()))
-        return complex<_Tp>(abs(__x.imag()), copysign(__pi/_Tp(2), __x.imag()));
+        return complex<_Tp>(std::abs(__x.imag()), copysign(__pi/_Tp(2), __x.imag()));
     complex<_Tp> __z = log(__x + sqrt(pow(__x, _Tp(2)) - _Tp(1)));
     return complex<_Tp>(copysign(__z.real(), _Tp(0)), copysign(__z.imag(), __x.imag()));
 }
@@ -1309,7 +1351,7 @@ atanh(const complex<_Tp>& __x)
     {
         return complex<_Tp>(copysign(_Tp(0), __x.real()), copysign(__pi/_Tp(2), __x.imag()));
     }
-    if (abs(__x.real()) == _Tp(1) && __x.imag() == _Tp(0))
+    if (std::abs(__x.real()) == _Tp(1) && __x.imag() == _Tp(0))
     {
         return complex<_Tp>(copysign(_Tp(INFINITY), __x.real()), copysign(_Tp(0), __x.imag()));
     }
@@ -1341,13 +1383,13 @@ complex<_Tp>
 cosh(const complex<_Tp>& __x)
 {
     if (isinf(__x.real()) && !isfinite(__x.imag()))
-        return complex<_Tp>(abs(__x.real()), _Tp(NAN));
+        return complex<_Tp>(std::abs(__x.real()), _Tp(NAN));
     if (__x.real() == 0 && !isfinite(__x.imag()))
         return complex<_Tp>(_Tp(NAN), __x.real());
     if (__x.real() == 0 && __x.imag() == 0)
         return complex<_Tp>(_Tp(1), __x.imag());
     if (__x.imag() == 0 && !isfinite(__x.real()))
-        return complex<_Tp>(abs(__x.real()), __x.imag());
+        return complex<_Tp>(std::abs(__x.real()), __x.imag());
     return complex<_Tp>(cosh(__x.real()) * cos(__x.imag()), sinh(__x.real()) * sin(__x.imag()));
 }
 
@@ -1417,8 +1459,8 @@ acos(const complex<_Tp>& __x)
         return complex<_Tp>(__pi/_Tp(2), -__x.imag());
     complex<_Tp> __z = log(__x + sqrt(pow(__x, _Tp(2)) - _Tp(1)));
     if (signbit(__x.imag()))
-        return complex<_Tp>(abs(__z.imag()), abs(__z.real()));
-    return complex<_Tp>(abs(__z.imag()), -abs(__z.real()));
+        return complex<_Tp>(std::abs(__z.imag()), std::abs(__z.real()));
+    return complex<_Tp>(std::abs(__z.imag()), -std::abs(__z.real()));
 }
 
 // atan
@@ -1465,8 +1507,8 @@ tan(const complex<_Tp>& __x)
 }
 
 template<class _Tp, class _CharT, class _Traits>
-basic_istream<_CharT, _Traits>&
-operator>>(basic_istream<_CharT, _Traits>& __is, complex<_Tp>& __x)
+std::basic_istream<_CharT, _Traits>&
+operator>>(std::basic_istream<_CharT, _Traits>& __is, complex<_Tp>& __x)
 {
     if (__is.good())
     {
@@ -1495,10 +1537,10 @@ operator>>(basic_istream<_CharT, _Traits>& __is, complex<_Tp>& __x)
                             __x = complex<_Tp>(__r, __i);
                         }
                         else
-                            __is.setstate(ios_base::failbit);
+                            __is.setstate(std::ios_base::failbit);
                     }
                     else
-                        __is.setstate(ios_base::failbit);
+                        __is.setstate(std::ios_base::failbit);
                 }
                 else if (__c == _CharT(')'))
                 {
@@ -1506,10 +1548,10 @@ operator>>(basic_istream<_CharT, _Traits>& __is, complex<_Tp>& __x)
                     __x = complex<_Tp>(__r, _Tp(0));
                 }
                 else
-                    __is.setstate(ios_base::failbit);
+                    __is.setstate(std::ios_base::failbit);
             }
             else
-                __is.setstate(ios_base::failbit);
+                __is.setstate(std::ios_base::failbit);
         }
         else
         {
@@ -1518,19 +1560,19 @@ operator>>(basic_istream<_CharT, _Traits>& __is, complex<_Tp>& __x)
             if (!__is.fail())
                 __x = complex<_Tp>(__r, _Tp(0));
             else
-                __is.setstate(ios_base::failbit);
+                __is.setstate(std::ios_base::failbit);
         }
     }
     else
-        __is.setstate(ios_base::failbit);
+        __is.setstate(std::ios_base::failbit);
     return __is;
 }
 
 template<class _Tp, class _CharT, class _Traits>
-basic_ostream<_CharT, _Traits>&
-operator<<(basic_ostream<_CharT, _Traits>& __os, const complex<_Tp>& __x)
+std::basic_ostream<_CharT, _Traits>&
+operator<<(std::basic_ostream<_CharT, _Traits>& __os, const complex<_Tp>& __x)
 {
-    basic_ostringstream<_CharT, _Traits> __s;
+    std::basic_ostringstream<_CharT, _Traits> __s;
     __s.flags(__os.flags());
     __s.imbue(__os.getloc());
     __s.precision(__os.precision());
