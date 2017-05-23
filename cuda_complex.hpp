@@ -592,6 +592,55 @@ operator/(const complex<_Tp>& __z, const complex<_Tp>& __w)
     return complex<_Tp>(__x, __y);
 }
 
+template<>
+CUDA_CALLABLE_MEMBER
+complex<float>
+operator/(const complex<float>& __z, const complex<float>& __w)
+{
+    int __ilogbw = 0;
+    float __a = __z.real();
+    float __b = __z.imag();
+    float __c = __w.real();
+    float __d = __w.imag();
+    float __logbw = logbf(fmaxf(fabsf(__c), fabsf(__d)));
+    if (isfinite(__logbw))
+    {
+        __ilogbw = static_cast<int>(__logbw);
+        __c = scalbnf(__c, -__ilogbw);
+        __d = scalbnf(__d, -__ilogbw);
+    }
+    float __denom = __c * __c + __d * __d;
+    float __x = scalbnf((__a * __c + __b * __d) / __denom, -__ilogbw);
+    float __y = scalbnf((__b * __c - __a * __d) / __denom, -__ilogbw);
+    if (isnan(__x) && isnan(__y))
+    {
+        if ((__denom == float(0)) && (!isnan(__a) || !isnan(__b)))
+        {
+#pragma warning(suppress: 4756) // Ignore INFINITY related warning
+            __x = copysignf(INFINITY, __c) * __a;
+#pragma warning(suppress: 4756) // Ignore INFINITY related warning
+            __y = copysignf(INFINITY, __c) * __b;
+        }
+        else if ((isinf(__a) || isinf(__b)) && isfinite(__c) && isfinite(__d))
+        {
+            __a = copysignf(isinf(__a) ? float(1) : float(0), __a);
+            __b = copysignf(isinf(__b) ? float(1) : float(0), __b);
+#pragma warning(suppress: 4756) // Ignore INFINITY related warning
+            __x = INFINITY * (__a * __c + __b * __d);
+#pragma warning(suppress: 4756) // Ignore INFINITY related warning
+            __y = INFINITY * (__b * __c - __a * __d);
+        }
+        else if (isinf(__logbw) && __logbw > float(0) && isfinite(__a) && isfinite(__b))
+        {
+            __c = copysignf(isinf(__c) ? float(1) : float(0), __c);
+            __d = copysignf(isinf(__d) ? float(1) : float(0), __d);
+            __x = float(0) * (__a * __c + __b * __d);
+            __y = float(0) * (__b * __c - __a * __d);
+        }
+    }
+    return complex<float>(__x, __y);
+}
+
 template<class _Tp>
 inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
